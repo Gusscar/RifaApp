@@ -48,9 +48,23 @@ export default async function RafflePage({ params }: PageProps) {
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const raffleUrl = `${protocol}://${host}/r/${slug}`
 
+  const normalized = {
+    ...raffle,
+    description: raffle.description ?? null,
+    cover_image: raffle.cover_image ?? null,
+    lottery_name: raffle.lottery_name ?? null,
+    draw_date: raffle.draw_date ?? null,
+    draw_time: raffle.draw_time ?? null,
+    number_price: raffle.number_price ?? null,
+    whatsapp: raffle.whatsapp ?? null,
+    bg_color: raffle.bg_color ?? null,
+    accent_color: raffle.accent_color ?? null,
+    prizes: Array.isArray(raffle.prizes) ? raffle.prizes : [],
+  }
+
   return (
     <RafflePageClient
-      raffle={raffle}
+      raffle={normalized}
       numbers={numbers ?? []}
       raffleUrl={raffleUrl}
     />

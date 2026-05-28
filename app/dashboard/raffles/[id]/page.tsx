@@ -28,5 +28,19 @@ export default async function RaffleManagePage({ params }: PageProps) {
     .eq('raffle_id', id)
     .order('number', { ascending: true })
 
-  return <RaffleManageClient raffle={raffle} initialNumbers={numbers ?? []} />
+  const normalized = {
+    ...raffle,
+    description: raffle.description ?? null,
+    cover_image: raffle.cover_image ?? null,
+    lottery_name: raffle.lottery_name ?? null,
+    draw_date: raffle.draw_date ?? null,
+    draw_time: raffle.draw_time ?? null,
+    number_price: raffle.number_price ?? null,
+    whatsapp: raffle.whatsapp ?? null,
+    bg_color: raffle.bg_color ?? null,
+    accent_color: raffle.accent_color ?? null,
+    prizes: Array.isArray(raffle.prizes) ? raffle.prizes : [],
+  }
+
+  return <RaffleManageClient raffle={normalized} initialNumbers={numbers ?? []} />
 }

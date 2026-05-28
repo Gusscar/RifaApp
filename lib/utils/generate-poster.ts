@@ -413,9 +413,6 @@ async function generateStatus(raffle: Raffle, raffleUrl: string): Promise<Blob> 
 // Helpers
 // ─────────────────────────────────────────────
 
-export { getTextColor } from '@/lib/utils/color-utils'
-export { contrastRatio } from '@/lib/utils/color-utils'
-
 function hexAlpha(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
