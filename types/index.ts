@@ -13,6 +13,8 @@ export interface Raffle {
   digits: 2 | 3
   number_price: number | null
   whatsapp: string | null
+  bg_color: string | null
+  accent_color: string | null
   created_at: string
   prizes?: Prize[]
 }

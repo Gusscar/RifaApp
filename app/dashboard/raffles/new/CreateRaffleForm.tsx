@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { generateSlug, formatNumber } from '@/lib/utils/slug'
@@ -11,10 +11,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { ImagePlus, X, Palette } from 'lucide-react'
 
 export function CreateRaffleForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -24,12 +26,61 @@ export function CreateRaffleForm() {
   const [digits, setDigits] = useState<'2' | '3'>('2')
   const [price, setPrice] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
-  const [coverImage, setCoverImage] = useState('')
+
+  // Image
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState('')
+
+  // Colors
+  const [bgColor, setBgColor] = useState('#0f0520')
+  const [accentColor, setAccentColor] = useState('#7c3aed')
 
   // Prizes
   const [prize1, setPrize1] = useState('')
   const [prize2, setPrize2] = useState('')
   const [prize3, setPrize3] = useState('')
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview)
+    }
+  }, [coverPreview])
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen debe pesar menos de 5 MB')
+      return
+    }
+    if (coverPreview) URL.revokeObjectURL(coverPreview)
+    setCoverFile(file)
+    setCoverPreview(URL.createObjectURL(file))
+  }
+
+  function removeImage() {
+    if (coverPreview) URL.revokeObjectURL(coverPreview)
+    setCoverFile(null)
+    setCoverPreview('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function uploadCoverImage(userId: string): Promise<string | null> {
+    if (!coverFile) return null
+    const supabase = createClient()
+    const ext = coverFile.name.split('.').pop()
+    const path = `${userId}/${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage
+      .from('raffle-covers')
+      .upload(path, coverFile, { upsert: true })
+    if (error) {
+      toast.error('Error al subir la imagen')
+      return null
+    }
+    const { data: { publicUrl } } = supabase.storage.from('raffle-covers').getPublicUrl(data.path)
+    return publicUrl
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -45,6 +96,13 @@ export function CreateRaffleForm() {
       return
     }
 
+    // Upload image if selected
+    const coverUrl = await uploadCoverImage(user.id)
+    if (coverFile && !coverUrl) {
+      setLoading(false)
+      return
+    }
+
     const slug = generateSlug(title)
     const digitsNum = parseInt(digits) as 2 | 3
 
@@ -56,13 +114,15 @@ export function CreateRaffleForm() {
         title: title.trim(),
         description: description.trim() || null,
         slug,
-        cover_image: coverImage.trim() || null,
+        cover_image: coverUrl,
         lottery_name: lotteryName.trim() || null,
         draw_date: drawDate || null,
         draw_time: drawTime || null,
         digits: digitsNum,
         number_price: price ? parseFloat(price) : null,
         whatsapp: whatsapp.trim() || null,
+        bg_color: bgColor,
+        accent_color: accentColor,
       })
       .select()
       .single()
@@ -86,7 +146,7 @@ export function CreateRaffleForm() {
       )
     }
 
-    // Generate numbers
+    // Generate numbers in batches of 200
     const total = digitsNum === 2 ? 100 : 1000
     const numbersToInsert = Array.from({ length: total }, (_, i) => ({
       raffle_id: raffle.id,
@@ -94,7 +154,6 @@ export function CreateRaffleForm() {
       status: 'available' as const,
     }))
 
-    // Insert in batches of 200
     for (let i = 0; i < numbersToInsert.length; i += 200) {
       const batch = numbersToInsert.slice(i, i + 200)
       const { error } = await supabase.from('raffle_numbers').insert(batch)
@@ -144,16 +203,96 @@ export function CreateRaffleForm() {
               onChange={(e) => setLotteryName(e.target.value)}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="cover">URL imagen de portada</Label>
-            <Input
-              id="cover"
-              type="url"
-              placeholder="https://..."
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
+
+          {/* Cover image upload */}
+          <div className="space-y-2">
+            <Label>Imagen de portada</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
             />
+            {coverPreview ? (
+              <div className="relative rounded-xl overflow-hidden h-44 bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverPreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                  aria-label="Quitar imagen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-36 rounded-xl border-2 border-dashed border-border hover:border-primary/60 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ImagePlus className="w-8 h-8" />
+                <span className="text-sm font-medium">Subir imagen desde el dispositivo</span>
+                <span className="text-xs">JPG, PNG, WEBP · Máx 5 MB</span>
+              </button>
+            )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Color customization */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Colores de la rifa
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Personaliza los colores que se usarán en la imagen compartible de tu rifa.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bgColor">Color de fondo</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="bgColor"
+                  type="color"
+                  value={bgColor}
+                  onChange={(e) => setBgColor(e.target.value)}
+                  className="h-10 w-14 rounded-lg cursor-pointer border border-border bg-transparent p-0.5"
+                />
+                <span className="text-sm font-mono text-muted-foreground">{bgColor}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accentColor">Color de acento</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="accentColor"
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="h-10 w-14 rounded-lg cursor-pointer border border-border bg-transparent p-0.5"
+                />
+                <span className="text-sm font-mono text-muted-foreground">{accentColor}</span>
+              </div>
+            </div>
+          </div>
+          {/* Preview pill */}
+          <div
+            className="h-8 rounded-full w-full"
+            style={{
+              background: `linear-gradient(90deg, ${accentColor}, #ec4899, ${accentColor})`,
+            }}
+          />
         </CardContent>
       </Card>
 

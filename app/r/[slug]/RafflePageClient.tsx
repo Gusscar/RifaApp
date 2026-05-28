@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { ImageDown, Loader2 } from 'lucide-react'
 import { Raffle, RaffleNumber } from '@/types'
 import { RaffleHeader } from '@/components/RaffleHeader'
 import { PrizeCard } from '@/components/PrizeCard'
@@ -10,6 +11,7 @@ import { ReserveModal } from '@/components/ReserveModal'
 import { ShareWhatsAppButton } from '@/components/ShareWhatsAppButton'
 import { useRaffleStore } from '@/store/raffle-store'
 import { useRealtimeNumbers } from '@/hooks/useRealtimeNumbers'
+import { toast } from 'sonner'
 
 interface RafflePageClientProps {
   raffle: Raffle
@@ -24,13 +26,46 @@ const fadeUp = {
 
 export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClientProps) {
   const [selectedNumber, setSelectedNumber] = useState<RaffleNumber | null>(null)
-  const { setNumbers } = useRaffleStore()
+  const [sharingImage, setSharingImage] = useState(false)
+  const { setNumbers, numbers: liveNumbers } = useRaffleStore()
 
   useEffect(() => {
     setNumbers(numbers)
   }, [numbers, setNumbers])
 
   useRealtimeNumbers(raffle.id)
+
+  const handleShareImage = useCallback(async () => {
+    setSharingImage(true)
+    try {
+      const { generateRafflePoster } = await import('@/lib/utils/generate-poster')
+      const blob = await generateRafflePoster(raffle, liveNumbers, raffleUrl)
+      const file = new File([blob], `rifa-${raffle.slug}.png`, { type: 'image/png' })
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: raffle.title,
+          text: `¡Reserva tu número en la rifa "${raffle.title}"! 🎟`,
+        })
+      } else {
+        // Fallback: download
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = file.name
+        a.click()
+        URL.revokeObjectURL(url)
+        toast.success('Imagen descargada')
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        toast.error('No se pudo generar la imagen')
+      }
+    } finally {
+      setSharingImage(false)
+    }
+  }, [raffle, liveNumbers, raffleUrl])
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,12 +79,31 @@ export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClien
           <RaffleHeader raffle={raffle} />
         </motion.div>
 
-        <motion.div initial="hidden" animate="show" variants={fadeUp} transition={{ duration: 0.4, delay: 0.1 }}>
+        {/* Action buttons */}
+        <motion.div
+          className="flex flex-col sm:flex-row gap-3"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
           <ShareWhatsAppButton
             raffleTitle={raffle.title}
             raffleUrl={raffleUrl}
             whatsapp={raffle.whatsapp}
           />
+          <button
+            onClick={handleShareImage}
+            disabled={sharingImage}
+            className="flex items-center justify-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20 disabled:opacity-60 sm:flex-1"
+          >
+            {sharingImage ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ImageDown className="w-4 h-4" />
+            )}
+            {sharingImage ? 'Generando imagen...' : 'Compartir imagen de la rifa'}
+          </button>
         </motion.div>
 
         {/* Prizes */}

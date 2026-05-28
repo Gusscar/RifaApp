@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { PWAInstallBanner } from '@/components/PWAInstallBanner'
@@ -43,17 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Toaster richColors position="top-center" />
         <PWAInstallBanner />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
+        <Script id="sw-register" strategy="afterInteractive">{`
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js');
+            });
+          }
+        `}</Script>
       </body>
     </html>
   )
