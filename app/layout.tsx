@@ -9,7 +9,7 @@ const geist = Geist({
 })
 
 export const viewport: Viewport = {
-  themeColor: '#7c3aed',
+  themeColor: '#6d28d9',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -24,16 +24,20 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'RifaApp',
+    startupImage: '/icons/icon.svg',
   },
   icons: {
-    icon: '/icons/icon.svg',
+    icon: [
+      { url: '/icons/favicon.svg', type: 'image/svg+xml' },
+    ],
     apple: '/icons/icon.svg',
+    shortcut: '/icons/favicon.svg',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${geist.variable} h-full antialiased`}>
+    <html lang="es" className={`${geist.variable} h-full antialiased`} style={{ backgroundColor: '#0f0520' }}>
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster richColors position="top-center" />

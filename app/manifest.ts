@@ -9,11 +9,11 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#0f0520',
-    theme_color: '#7c3aed',
-    categories: ['utilities', 'finance'],
+    theme_color: '#6d28d9',
+    categories: ['utilities', 'entertainment'],
     icons: [
       {
-        src: '/icons/icon.svg',
+        src: '/icons/favicon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
