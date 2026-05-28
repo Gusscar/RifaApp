@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import { toast } from 'sonner'
-import { ExternalLink, Trash2, Search, ArrowLeft, UserPlus, Pencil } from 'lucide-react'
+import { ExternalLink, Trash2, Search, ArrowLeft, UserPlus, Pencil, Settings2 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -234,7 +234,7 @@ export function RaffleManageClient({ raffle, initialNumbers }: RaffleManageClien
           <h1 className="text-xl sm:text-2xl font-bold leading-tight">{raffle.title}</h1>
           <p className="text-muted-foreground text-sm mt-1">Gestiona tus participantes</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link
             href={`/r/${raffle.slug}`}
             target="_blank"
@@ -242,6 +242,13 @@ export function RaffleManageClient({ raffle, initialNumbers }: RaffleManageClien
           >
             <ExternalLink className="w-4 h-4 mr-1" />
             Ver pública
+          </Link>
+          <Link
+            href={`/dashboard/raffles/${raffle.id}/edit`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+          >
+            <Settings2 className="w-4 h-4 mr-1" />
+            Editar
           </Link>
           <Button
             variant="destructive"
