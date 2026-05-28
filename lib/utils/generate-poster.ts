@@ -1,4 +1,5 @@
 import type { Raffle, RaffleNumber } from '@/types'
+import { getTextColor } from '@/lib/utils/color-utils'
 
 export type PosterFormat = 'poster' | 'status'
 
@@ -412,28 +413,8 @@ async function generateStatus(raffle: Raffle, raffleUrl: string): Promise<Blob> 
 // Helpers
 // ─────────────────────────────────────────────
 
-/** WCAG relative luminance → pick white or dark text */
-export function getTextColor(hex: string): '#ffffff' | '#1a1a1a' {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  const lin = (c: number) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-  return L > 0.35 ? '#1a1a1a' : '#ffffff'
-}
-
-/** WCAG contrast ratio (1-21) */
-export function contrastRatio(bg: string, fg: string = '#ffffff'): number {
-  const lum = (hex: string) => {
-    const r = parseInt(hex.slice(1, 3), 16) / 255
-    const g = parseInt(hex.slice(3, 5), 16) / 255
-    const b = parseInt(hex.slice(5, 7), 16) / 255
-    const lin = (c: number) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-  }
-  const L1 = lum(bg), L2 = lum(fg)
-  return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)
-}
+export { getTextColor } from '@/lib/utils/color-utils'
+export { contrastRatio } from '@/lib/utils/color-utils'
 
 function hexAlpha(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16)

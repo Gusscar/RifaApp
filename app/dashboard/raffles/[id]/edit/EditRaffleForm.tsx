@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { ImagePlus, X, Palette, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Raffle, Prize } from '@/types'
-import { getTextColor, contrastRatio } from '@/lib/utils/generate-poster'
+import { getTextColor, contrastRatio } from '@/lib/utils/color-utils'
 
 interface EditRaffleFormProps {
   raffle: Raffle & { prizes: Prize[] }

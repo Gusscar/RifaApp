@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { ImagePlus, X, Palette, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import { getTextColor, contrastRatio } from '@/lib/utils/generate-poster'
+import { getTextColor, contrastRatio } from '@/lib/utils/color-utils'
 
 export function CreateRaffleForm() {
   const router = useRouter()
