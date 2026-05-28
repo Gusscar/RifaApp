@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { ImageDown, Loader2 } from 'lucide-react'
+import { ImageDown, Loader2, Smartphone } from 'lucide-react'
+import type { PosterFormat } from '@/lib/utils/generate-poster'
 import { Raffle, RaffleNumber } from '@/types'
 import { RaffleHeader } from '@/components/RaffleHeader'
 import { PrizeCard } from '@/components/PrizeCard'
@@ -26,7 +27,7 @@ const fadeUp = {
 
 export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClientProps) {
   const [selectedNumber, setSelectedNumber] = useState<RaffleNumber | null>(null)
-  const [sharingImage, setSharingImage] = useState(false)
+  const [sharingFormat, setSharingFormat] = useState<PosterFormat | null>(null)
   const { setNumbers, numbers: liveNumbers } = useRaffleStore()
 
   useEffect(() => {
@@ -35,12 +36,13 @@ export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClien
 
   useRealtimeNumbers(raffle.id)
 
-  const handleShareImage = useCallback(async () => {
-    setSharingImage(true)
+  const handleShareImage = useCallback(async (format: PosterFormat) => {
+    setSharingFormat(format)
     try {
       const { generateRafflePoster } = await import('@/lib/utils/generate-poster')
-      const blob = await generateRafflePoster(raffle, liveNumbers, raffleUrl)
-      const file = new File([blob], `rifa-${raffle.slug}.png`, { type: 'image/png' })
+      const blob = await generateRafflePoster(raffle, liveNumbers, raffleUrl, format)
+      const suffix = format === 'status' ? 'estado' : 'flyer'
+      const file = new File([blob], `rifa-${raffle.slug}-${suffix}.png`, { type: 'image/png' })
 
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
@@ -49,7 +51,6 @@ export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClien
           text: `¡Reserva tu número en la rifa "${raffle.title}"! 🎟`,
         })
       } else {
-        // Fallback: download
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -63,7 +64,7 @@ export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClien
         toast.error('No se pudo generar la imagen')
       }
     } finally {
-      setSharingImage(false)
+      setSharingFormat(null)
     }
   }, [raffle, liveNumbers, raffleUrl])
 
@@ -93,16 +94,20 @@ export function RafflePageClient({ raffle, numbers, raffleUrl }: RafflePageClien
             whatsapp={raffle.whatsapp}
           />
           <button
-            onClick={handleShareImage}
-            disabled={sharingImage}
+            onClick={() => handleShareImage('poster')}
+            disabled={sharingFormat !== null}
             className="flex items-center justify-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20 disabled:opacity-60 sm:flex-1"
           >
-            {sharingImage ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ImageDown className="w-4 h-4" />
-            )}
-            {sharingImage ? 'Generando imagen...' : 'Compartir imagen de la rifa'}
+            {sharingFormat === 'poster' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageDown className="w-4 h-4" />}
+            {sharingFormat === 'poster' ? 'Generando...' : 'Compartir flyer'}
+          </button>
+          <button
+            onClick={() => handleShareImage('status')}
+            disabled={sharingFormat !== null}
+            className="flex items-center justify-center gap-2 rounded-xl border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-3 text-sm font-semibold text-fuchsia-300 transition-colors hover:bg-fuchsia-500/20 disabled:opacity-60 sm:flex-1"
+          >
+            {sharingFormat === 'status' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
+            {sharingFormat === 'status' ? 'Generando...' : 'Estado WhatsApp'}
           </button>
         </motion.div>
 

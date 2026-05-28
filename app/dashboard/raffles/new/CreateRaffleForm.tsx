@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { ImagePlus, X, Palette } from 'lucide-react'
+import { ImagePlus, X, Palette, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { getTextColor, contrastRatio } from '@/lib/utils/generate-poster'
 
 export function CreateRaffleForm() {
   const router = useRouter()
@@ -255,9 +256,6 @@ export function CreateRaffleForm() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Personaliza los colores que se usarán en la imagen compartible de tu rifa.
-          </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="bgColor">Color de fondo</Label>
@@ -286,13 +284,74 @@ export function CreateRaffleForm() {
               </div>
             </div>
           </div>
-          {/* Preview pill */}
+
+          {/* Live preview card */}
           <div
-            className="h-8 rounded-full w-full"
-            style={{
-              background: `linear-gradient(90deg, ${accentColor}, #ec4899, ${accentColor})`,
-            }}
-          />
+            className="rounded-2xl overflow-hidden border border-white/10 shadow-lg"
+            style={{ background: bgColor }}
+          >
+            {/* Accent top bar */}
+            <div
+              className="h-1.5 w-full"
+              style={{ background: `linear-gradient(90deg, ${accentColor}, #ec4899, ${accentColor})` }}
+            />
+            <div className="px-4 py-5 space-y-2">
+              {/* Branding */}
+              <p className="text-xs font-bold" style={{ color: accentColor }}>🎟 RifaApp</p>
+              {/* Title */}
+              <p
+                className="font-extrabold text-lg leading-tight"
+                style={{ color: getTextColor(bgColor), textShadow: getTextColor(bgColor) === '#ffffff' ? '0 2px 8px rgba(0,0,0,0.7)' : '0 1px 4px rgba(255,255,255,0.5)' }}
+              >
+                {title || 'Nombre de tu rifa'}
+              </p>
+              {/* Info row */}
+              <p className="text-xs" style={{ color: getTextColor(bgColor) === '#ffffff' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }}>
+                📅 Fecha sorteo · 💵 Precio
+              </p>
+              {/* Number chips sample */}
+              <div className="flex gap-1 flex-wrap pt-1">
+                {[
+                  { n: '05', c: '#10b981' },
+                  { n: '12', c: '#f59e0b' },
+                  { n: '28', c: '#f43f5e' },
+                  { n: '41', c: '#10b981' },
+                  { n: '67', c: '#10b981' },
+                ].map(({ n, c }) => (
+                  <span
+                    key={n}
+                    className="text-xs font-bold rounded px-1.5 py-0.5"
+                    style={{ background: c + '25', color: c, border: `1px solid ${c}60` }}
+                  >
+                    {n}
+                  </span>
+                ))}
+                <span className="text-xs" style={{ color: getTextColor(bgColor) === '#ffffff' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)' }}>...</span>
+              </div>
+              {/* CTA mini */}
+              <div
+                className="rounded-lg px-3 py-2 text-center text-xs font-bold text-white mt-1"
+                style={{ background: `linear-gradient(90deg, ${accentColor}, #ec4899)` }}
+              >
+                ¡Reserva tu número aquí!
+              </div>
+            </div>
+          </div>
+
+          {/* Contrast warning */}
+          {(() => {
+            const tc = getTextColor(bgColor)
+            const ratio = contrastRatio(bgColor, tc)
+            const ok = ratio >= 4.5
+            return (
+              <div className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                {ok
+                  ? <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Buen contraste — el texto se verá legible ({ratio.toFixed(1)}:1)</>
+                  : <><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Contraste bajo ({ratio.toFixed(1)}:1) — prueba un color de fondo más oscuro o más claro</>
+                }
+              </div>
+            )
+          })()}
         </CardContent>
       </Card>
 
