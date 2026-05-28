@@ -17,21 +17,25 @@ VALUES ('raffle-covers', 'raffle-covers', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Allow authenticated users to upload
+DROP POLICY IF EXISTS "Authenticated users can upload raffle covers" ON storage.objects;
 CREATE POLICY "Authenticated users can upload raffle covers"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'raffle-covers');
 
 -- Allow authenticated users to update their uploads
+DROP POLICY IF EXISTS "Authenticated users can update raffle covers" ON storage.objects;
 CREATE POLICY "Authenticated users can update raffle covers"
 ON storage.objects FOR UPDATE TO authenticated
 USING (bucket_id = 'raffle-covers');
 
 -- Allow authenticated users to delete their uploads
+DROP POLICY IF EXISTS "Authenticated users can delete raffle covers" ON storage.objects;
 CREATE POLICY "Authenticated users can delete raffle covers"
 ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'raffle-covers');
 
 -- Allow public read access to raffle covers
+DROP POLICY IF EXISTS "Public can view raffle covers" ON storage.objects;
 CREATE POLICY "Public can view raffle covers"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'raffle-covers');
