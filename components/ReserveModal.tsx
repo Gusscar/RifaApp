@@ -9,6 +9,7 @@ import { RaffleNumber, Raffle } from '@/types'
 import { buildWhatsAppUrl } from '@/lib/utils/slug'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { PhoneInput } from '@/components/PhoneInput'
 
 interface ReserveModalProps {
   number: RaffleNumber | null
@@ -19,7 +20,7 @@ interface ReserveModalProps {
 
 export function ReserveModal({ number, raffle, open, onClose }: ReserveModalProps) {
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState('+57')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -56,7 +57,7 @@ export function ReserveModal({ number, raffle, open, onClose }: ReserveModalProp
     }
 
     setName('')
-    setPhone('')
+    setPhone('+57')
     onClose()
   }
 
@@ -87,15 +88,11 @@ export function ReserveModal({ number, raffle, open, onClose }: ReserveModalProp
 
           <div className="space-y-1.5">
             <Label htmlFor="reserve-phone" className="text-sm font-medium">Tu teléfono</Label>
-            <Input
+            <PhoneInput
               id="reserve-phone"
-              type="tel"
-              placeholder="3001234567"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={setPhone}
               required
-              className="h-11 text-base"
-              inputMode="tel"
             />
           </div>
 

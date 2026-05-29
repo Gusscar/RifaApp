@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { ExternalLink, Trash2, Search, ArrowLeft, UserPlus, Pencil, Settings2 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { PhoneInput } from '@/components/PhoneInput'
 
 interface RaffleManageClientProps {
   raffle: Raffle
@@ -35,7 +36,7 @@ function AssignModal({
   onSaved: () => void
 }) {
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState('+57')
   const [status, setStatus] = useState<'reserved' | 'paid'>('reserved')
   const [loading, setLoading] = useState(false)
 
@@ -43,7 +44,7 @@ function AssignModal({
   useEffect(() => {
     if (number) {
       setName(number.participant_name ?? '')
-      setPhone(number.participant_phone ?? '')
+      setPhone(number.participant_phone || '+57')
       setStatus(number.status === 'paid' ? 'paid' : 'reserved')
     }
   }, [number])
@@ -109,14 +110,10 @@ function AssignModal({
 
           <div className="space-y-1.5">
             <Label htmlFor="assign-phone">Teléfono</Label>
-            <Input
+            <PhoneInput
               id="assign-phone"
-              type="tel"
-              inputMode="tel"
-              placeholder="3001234567"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="h-11 text-base"
+              onChange={setPhone}
             />
           </div>
 
