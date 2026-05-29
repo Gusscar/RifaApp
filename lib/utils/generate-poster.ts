@@ -171,30 +171,54 @@ async function generatePoster(raffle: Raffle, numbers: RaffleNumber[], raffleUrl
   ctx.stroke()
   y += 18
 
+  // ── Numbers section panel background ──
+  const gridPanelY = y - 6
+  const gridPanelH = 16 + 20 + rows * cellH + 16  // header + legend + grid + padding
+  roundRect(ctx, 16, gridPanelY, W - 32, gridPanelH, 14)
+  ctx.fillStyle = hexAlpha(bg, 0.0)
+  ctx.fill()
+  ctx.strokeStyle = hexAlpha(accent, 0.18)
+  ctx.lineWidth = 1
+  ctx.stroke()
+
   // ── Numbers header + legend ──
   ctx.textAlign = 'left'
   ctx.font = 'bold 11px system-ui, -apple-system, sans-serif'
   ctx.fillStyle = hexAlpha(accent, 0.95)
-  ctx.fillText('NÚMEROS', 24, y + 8)
+  ctx.fillText('NÚMEROS', 24, y + 9)
 
-  const legend: [number, string, string][] = [
-    [W - 24 - 215, '#10b981', 'Disponible'],
-    [W - 24 - 130, '#f59e0b', 'Reservado'],
-    [W - 24 - 42, '#f43f5e', 'Pagado'],
+  // Legend with styles matching the actual cells
+  const legendY = y + 1
+  const legendItems: [number, string, string, 'outline' | 'filled-amber' | 'filled-rose'][] = [
+    [W - 24 - 218, '#10b981', 'Disponible', 'outline'],
+    [W - 24 - 134, '#f59e0b', 'Reservado',  'filled-amber'],
+    [W - 24 - 46,  '#f43f5e', 'Pagado',     'filled-rose'],
   ]
   ctx.font = '10px system-ui, -apple-system, sans-serif'
-  for (const [lx, color, label] of legend) {
-    ctx.fillStyle = color
-    ctx.fillRect(lx, y + 1, 8, 8)
+  for (const [lx, color, label, style] of legendItems) {
+    // Draw mini legend swatch matching cell style
+    ctx.beginPath()
+    ctx.rect(lx, legendY + 1, 9, 9)
+    if (style === 'outline') {
+      ctx.fillStyle = hexAlpha(color, 0.1)
+      ctx.fill()
+      ctx.strokeStyle = color
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+    } else {
+      ctx.fillStyle = color
+      ctx.fill()
+    }
     ctx.fillStyle = subColor
     ctx.textAlign = 'left'
-    ctx.fillText(label, lx + 11, y + 9)
+    ctx.fillText(label, lx + 13, legendY + 9)
   }
-  y += 20
+  y += 22
 
   // ── Numbers grid ──
   const gridLeft = 24
-  ctx.font = `bold ${total <= 100 ? 10 : 7}px system-ui, -apple-system, sans-serif`
+  const fontSize = total <= 100 ? 11 : 8
+  ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`
   ctx.textAlign = 'center'
 
   for (let i = 0; i < sorted.length; i++) {
@@ -203,20 +227,51 @@ async function generatePoster(raffle: Raffle, numbers: RaffleNumber[], raffleUrl
     const row = Math.floor(i / cols)
     const nx = gridLeft + col * cellW
     const ny = y + row * cellH
+
     const color = num.status === 'available' ? '#10b981'
       : num.status === 'reserved' ? '#f59e0b' : '#f43f5e'
+    const isAvailable = num.status === 'available'
+    const isReserved = num.status === 'reserved'
 
     if (cellH >= 20) {
-      ctx.fillStyle = hexAlpha(color, 0.2)
-      ctx.fillRect(nx + 1, ny + 1, cellW - 2, cellH - 2)
-      ctx.strokeStyle = hexAlpha(color, 0.6)
-      ctx.lineWidth = 0.5
-      ctx.strokeRect(nx + 1, ny + 1, cellW - 2, cellH - 2)
-      ctx.fillStyle = color
-      ctx.fillText(num.number, nx + cellW / 2, ny + cellH - 8)
+      // ── Large cells (100 numbers) ──
+      const r = 4
+      if (isAvailable) {
+        // Outline only → looks "open/free"
+        roundRect(ctx, nx + 1.5, ny + 1.5, cellW - 3, cellH - 3, r)
+        ctx.fillStyle = hexAlpha(color, 0.1)
+        ctx.fill()
+        ctx.strokeStyle = hexAlpha(color, 0.8)
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+        ctx.fillStyle = color
+        ctx.fillText(num.number, nx + cellW / 2, ny + cellH - 7)
+      } else {
+        // Solid fill → clearly taken
+        roundRect(ctx, nx + 1, ny + 1, cellW - 2, cellH - 2, r)
+        ctx.fillStyle = color
+        ctx.fill()
+        // Amber needs dark text, rose needs white
+        ctx.fillStyle = isReserved ? '#1a1a1a' : '#ffffff'
+        ctx.fillText(num.number, nx + cellW / 2, ny + cellH - 7)
+      }
     } else {
-      ctx.fillStyle = color
-      ctx.fillRect(nx + 1, ny + 1, cellW - 3, cellH - 3)
+      // ── Small cells (1000 numbers) ──
+      const r = 2
+      if (isAvailable) {
+        // Lighter: subtle so sold numbers stand out
+        roundRect(ctx, nx + 1, ny + 1, cellW - 2, cellH - 2, r)
+        ctx.fillStyle = hexAlpha(color, 0.35)
+        ctx.fill()
+        ctx.strokeStyle = hexAlpha(color, 0.5)
+        ctx.lineWidth = 0.5
+        ctx.stroke()
+      } else {
+        // Solid + slightly brighter for sold numbers
+        roundRect(ctx, nx + 1, ny + 1, cellW - 2, cellH - 2, r)
+        ctx.fillStyle = color
+        ctx.fill()
+      }
     }
   }
   y += rows * cellH + 14
